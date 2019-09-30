@@ -30,7 +30,7 @@ const CartScreen = props => {
         <View style={styles.screen}>
             <View style={styles.summary}>
                 <Text style={styles.summeryText}>
-                    Total: <Text style={styles.amount}>${cartTotalAmount.toFixed(2)}</Text>
+                    Total: <Text style={styles.amount}>${Math.round(cartTotalAmount.toFixed(2) * 100) / 100 }</Text> 
                 </Text>
                 <Button 
                     color={Colors.accent} 
@@ -47,6 +47,7 @@ const CartScreen = props => {
                         quantity={itemData.item.quantity}
                         title={itemData.item.productTitle}
                         amount={itemData.item.sum}
+                        deletable //this sets delete button to true on CartItem. dont use it on OrderItem so that comp doesnt get button.
                         onRemove={() => dispatch(cartActions.removeFromCart(itemData.item.productId))}
                     />
                 )}  
@@ -88,3 +89,5 @@ const styles = StyleSheet.create({
 });
 
 export default CartScreen;
+
+//Math.round we used bc of way js handles floating points can wind up with -0 after removing items, so this gets rid of that.

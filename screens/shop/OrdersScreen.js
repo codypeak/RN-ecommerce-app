@@ -17,6 +17,7 @@ const OrdersScreen = props => {
                 <OrderItem 
                     amount={itemData.item.totalAmount} //these come from orders model via state.
                     date={itemData.item.readableDate}
+                    items={itemData.item.items}
                 /> 
             )}
         />

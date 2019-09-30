@@ -1,16 +1,23 @@
 import React from 'react';
-import { Text, FlatList, Platform } from 'react-native';
+import { Text, FlatList, Platform, Button } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 
 import ProductItem from '../../components/shop/ProductItem';
 import * as cartActions from '../../store/actions/cart'; //imports all actions. merges all exports from that file into one object.
 import HeaderButton from '../../components/UI/HeaderButton';
+import Colors from '../../constants/Colors';
 
 const ProductsOverviewScreen = props => {
     const products = useSelector(state => state.products.availableProducts);  //this hook automatically takes in state and returns whatever data/slice of state you want from it. 
     const dispatch = useDispatch();
 
+    const selectItemHandler = (id, title) => {
+        props.navigation.navigate('ProductDetail', {
+            productId: id, 
+            productTitle: title,
+        });
+    }
     return (
         <FlatList 
             data={products}
@@ -20,14 +27,27 @@ const ProductsOverviewScreen = props => {
                     image={itemData.item.imageUrl}
                     title={itemData.item.title}
                     price={itemData.item.price}
-                    onViewDetail={() => {
-                        props.navigation.navigate('ProductDetail', { //2nd arg is js obj that is params for this action.
-                            productId: itemData.item.id,  //itemData.item points at a single product based on data model which then gets forwarded to detail screen.
-                            productTitle: itemData.item.title,
-                        });
+                    onSelect={() => {
+                        selectItemHandler(itemData.item.id, itemData.item.title)
+                        // props.navigation.navigate('ProductDetail', { //2nd arg is js obj that is params for this action.
+                        //     productId: itemData.item.id,  //itemData.item points at a single product based on data model which then gets forwarded to detail screen.
+                        //     productTitle: itemData.item.title,
+                        // });
                     }}
-                    onAddToCart={() => dispatch(cartActions.addToCart(itemData.item))}
-                />
+                >
+                    <Button 
+                        color={Colors.primary} 
+                        title='View Details' 
+                        onPress={() => {
+                            selectItemHandler(itemData.item.id, itemData.item.title)}} 
+                    />
+                    <Button 
+                        color={Colors.primary} 
+                        title='To Cart' 
+                        onPress={() => {
+                            dispatch(cartActions.addToCart(itemData.item))}} 
+                    />
+                </ProductItem>
             )}
         />
     );

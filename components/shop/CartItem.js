@@ -11,13 +11,15 @@ const CartItem = props => {
             </View>
             <View style={styles.itemData}>
                 <Text style={styles.mainText}>${props.amount.toFixed(2)}</Text>
-                <TouchableOpacity onPress={props.onRemove} style={styles.deleteButton}>
-                    <Ionicons 
-                        name={Platform.OS === 'android' ? 'md-trash' : 'ios-trash'} 
-                        size={23}
-                        color='red'
-                    />
-                </TouchableOpacity>
+                {props.deletable && (  //add deletable prop bc want to be able to reuse this component for OrderItem detail but dont want button there.
+                    <TouchableOpacity onPress={props.onRemove} style={styles.deleteButton}>
+                        <Ionicons 
+                            name={Platform.OS === 'android' ? 'md-trash' : 'ios-trash'} 
+                            size={23}
+                            color='red'
+                        />
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     )
