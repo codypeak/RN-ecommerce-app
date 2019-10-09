@@ -1,11 +1,12 @@
-import React, { useEffect, useCallback, useReducer } from 'react'; //useState to save user input. effect and callback for submit.
-import { View, Text, StyleSheet, ScrollView, TextInput, Platform, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback, useReducer } from 'react'; //useState to save user input. effect and callback for submit.
+import { View, Text, StyleSheet, ScrollView, TextInput, Platform, Alert, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import { useSelector, useDispatch } from 'react-redux';  //reach out to product state to populate form for edit. useDispatch much easier to manage form state than doing each line individually with useState.
 
 import HeaderButton from '../../components/UI/HeaderButton';
 import * as productsActions from '../../store/actions/products';
 import Input from '../../components/UI/Input';
+import Colors from '../../constants/Colors';
 
 const FORM_INPUT_UPDATE = 'FORM_INPUT_UPDATE';
 const formReducer = (state, action) => {
@@ -32,6 +33,9 @@ const formReducer = (state, action) => {
 };
 
 const EditProductScreen = props => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState();
+
     const prodId = props.navigation.getParam('productId'); //if receive prodId it is in edit mode, so prepopulate form.
     const editedProduct = useSelector(state =>
         state.products.userProducts.find(prod => prod.id === prodId) //if there is no id it is undefined and nothing is populated.
@@ -54,31 +58,44 @@ const EditProductScreen = props => {
         formIsValid: editedProduct ? true : false
     });
 
-    const submitHandler = useCallback(() => { //uCB will prevent re-rendering that will cause infinite loop.
+    useEffect(() => {
+        if (error) {
+            Alert.alert('An error occurred!', error, [{ text: 'Okay' }]);
+        }
+    }, [error]);
+
+    const submitHandler = useCallback(async () => { //uCB will prevent re-rendering that will cause infinite loop.
         if (!formState.formIsValid) {
             Alert.alert('Wrong input!', 'Please check the errors on the form', [
                 { text: 'Okay' }
             ]);
             return;
         }
-        if (editedProduct) { //if editedProduct is set (ie theres an id), then submit will edit, else add.
-            dispatch(productsActions.updateProduct(
-                prodId, 
-                formState.inputValues.title, 
-                formState.inputValues.description, 
-                formState.inputValues.imageUrl
-                )
-            );
-        } else {
-            dispatch(productsActions.createProduct(
-                formState.inputValues.title, 
-                formState.inputValues.description, 
-                formState.inputValues.imageUrl, 
-                +formState.inputValues.price // + converts price from string to number.
-                )
-            );
-        }
+        setError(null);
+        setIsLoading(true);
+        try {
+            if (editedProduct) { //if editedProduct is set (ie theres an id), then submit will edit, else add.
+                await dispatch(productsActions.updateProduct(
+                    prodId, 
+                    formState.inputValues.title, 
+                    formState.inputValues.description, 
+                    formState.inputValues.imageUrl
+                    )
+                );
+            } else {
+                await dispatch(productsActions.createProduct(
+                    formState.inputValues.title, 
+                    formState.inputValues.description, 
+                    formState.inputValues.imageUrl, 
+                    +formState.inputValues.price // + converts price from string to number.
+                    )
+                );
+            }
         props.navigation.goBack();
+        } catch (err) {
+            setError(err.message);
+        }
+        setIsLoading(false);
     }, [dispatch, prodId, formState]);
 
     useEffect(() => {
@@ -94,7 +111,20 @@ const EditProductScreen = props => {
         });
     }, [dispatchFormState]);
 
+    if (isLoading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size='large' color={Colors.primary} />
+            </View>
+        );
+    }
+
     return (
+        <KeyboardAvoidingView 
+            style={{flex: 1}} //this is important bc KeyboardAvoidingView needs whole screen size.
+            behavior='padding' 
+            keyboardVerticalOffset={100}
+        >
         <ScrollView>
             <View style={styles.form}>
                 <Input 
@@ -105,6 +135,7 @@ const EditProductScreen = props => {
                     autoCapitalize='sentences'
                     autoCorrect
                     returnKeyType='next'
+                    onInputChange={inputChangeHandler}
                     initialValue={editedProduct ? editedProduct.title : ''} //would something like inputValues[key] work and be DRYer?
                     initiallyValid={!!editedProduct} //if editedProduct exists it is true.
                     required
@@ -115,6 +146,7 @@ const EditProductScreen = props => {
                     errorText='Please enter a valid image URL'
                     keyboardType='default'
                     returnKeyType='next'
+                    onInputChange={inputChangeHandler}
                     initialValue={editedProduct ? editedProduct.imageUrl : ''} 
                     initiallyValid={!!editedProduct} 
                     required
@@ -126,6 +158,7 @@ const EditProductScreen = props => {
                         errorText='Please enter a valid price'
                         keyboardType='decimal-pad'
                         returnKeyType='next'
+                        onInputChange={inputChangeHandler}
                         required
                         min={0.1}
                     />
@@ -139,6 +172,7 @@ const EditProductScreen = props => {
                     autoCorrect
                     multiline
                     numberOfLines={3}
+                    onInputChange={inputChangeHandler}
                     initialValue={editedProduct ? editedProduct.description : ''} 
                     initiallyValid={!!editedProduct} 
                     required
@@ -146,6 +180,7 @@ const EditProductScreen = props => {
                 />
             </View>
         </ScrollView>
+        </KeyboardAvoidingView>
     )
 };
 
@@ -171,7 +206,11 @@ const styles = StyleSheet.create({
     form: {
         margin: 20,
     },
-    
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
 });
 
 export default EditProductScreen;

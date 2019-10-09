@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet, Button } from 'react-native';
+import React, {useState } from 'react';
+import { View, Text, FlatList, StyleSheet, Button, ActivityIndicator } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux'; //to get data out of store.
 
 import Colors from '../../constants/Colors';
@@ -9,6 +9,8 @@ import * as cartActions from '../../store/actions/cart';
 import * as ordersActions from '../../store/actions/orders';
 
 const CartScreen = props => {
+    const [isLoading, setIsLoading] = useState(false);
+
     const cartTotalAmount = useSelector(state => state.cart.totalAmount);
     const cartItems = useSelector(state => { //more useful to return array here, rather than obj, so transform it bc easier to use in FlatList. also can check array length to enable order now button.
         const transformedCartItems = [];
@@ -27,18 +29,28 @@ const CartScreen = props => {
     });
     const dispatch = useDispatch();
 
+    const sendOrderHandler = async () => { //addOrder returns promise, so dispatch returns promise, so can add async here.
+        setIsLoading(true);
+        await dispatch(ordersActions.addOrder(cartItems, cartTotalAmount));
+        setIsLoading(false);
+    }
+
     return (
         <View style={styles.screen}>
             <Card style={styles.summary}>
                 <Text style={styles.summeryText}>
                     Total: <Text style={styles.amount}>${Math.round(cartTotalAmount.toFixed(2) * 100) / 100 }</Text> 
                 </Text>
-                <Button 
-                    color={Colors.accent} 
-                    title='Order Now' 
-                    disabled={cartItems.length === 0} //disabled if nothing in cart.
-                    onPress={() => dispatch(ordersActions.addOrder(cartItems, cartTotalAmount))}
-                />
+                {isLoading ? (
+                    <ActivityIndicator size='small' color={Colors.primary}/> 
+                ) : (
+                    <Button 
+                        color={Colors.accent} 
+                        title='Order Now' 
+                        disabled={cartItems.length === 0} //disabled if nothing in cart.
+                        onPress={sendOrderHandler}
+                    />
+                )}
             </Card>
             <FlatList 
                 data={cartItems}
