@@ -4,9 +4,10 @@ export const ADD_ORDER = 'ADD_ORDER';
 export const SET_ORDERS = 'SET_ORDERS';
 
 export const fetchOrders = () => {
-    return async dispatch => {
+    return async (dispatch, getState) => {
+        const userId = getState().auth.userId;
         try {
-            const response = await fetch('https://rn-ecommerce-app-d521a.firebaseio.com/orders/u1.json');
+            const response = await fetch(`https://rn-ecommerce-app-d521a.firebaseio.com/orders/${userId}.json`);
 
             if (!response.ok) {  //ok is a field available on response object. returns true if response is a 200.
                 throw new Error('Something went wrong!');
@@ -31,19 +32,23 @@ export const fetchOrders = () => {
 };
 
 export const addOrder = (cartItems, totalAmount) => { //takes in both properties of cart state.
-    return async dispatch => {
+    return async (dispatch, getState) => {
+        const token = getState().auth.token;
+        const userId = getState().auth.userId;
         const date = new Date();
-        const response = await fetch(`https://rn-ecommerce-app-d521a.firebaseio.com/orders/u1.json`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                cartItems,
-                totalAmount,
-                date: date.toISOString(), //creates date locally in app and then stores to server.
-            })
-        });
+        const response = await fetch(
+            `https://rn-ecommerce-app-d521a.firebaseio.com/orders/${userId}.json?auth=${token}`,//can dynamically get userId and token b/c getState gives access to store. 
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    cartItems,
+                    totalAmount,
+                    date: date.toISOString(), //creates date locally in app and then stores to server.
+                })
+            });
 
         if (!response.ok) {
             throw new Error('Something went wrong.')

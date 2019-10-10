@@ -1,8 +1,10 @@
 import React from 'react';
-import { createAppContainer } from 'react-navigation';
+import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
-import { createDrawerNavigator } from 'react-navigation-drawer';
-import { Platform } from 'react-native';
+import { createDrawerNavigator, DrawerNavigatorItems } from 'react-navigation-drawer';
+import { Platform, SafeAreaView, Button, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
 
 import ProductOverviewScreen from '../screens/shop/ProductOverviewScreen';
 import ProductDetailScreen from '../screens/shop/ProductDetailScreen';
@@ -10,8 +12,11 @@ import CartScreen from '../screens/shop/CartScreen';
 import OrdersScreen from '../screens/shop/OrdersScreen'; //putting in own stack in a drawer.
 import UserProductsScreen from '../screens/user/UserProductsScreen';
 import EditProductScreen from '../screens/user/EditProductScreen';
+import AuthScreen from '../screens/user/AuthScreen';
+import StartupScreen from '../screens/StartupScreen';
 import Colors from '../constants/Colors';
-import { Ionicons } from '@expo/vector-icons';
+import * as authActions from '../store/actions/auth';
+import auth from '../store/reducers/auth';
 
 const defaultNavOptions = {
     headerStyle: {
@@ -77,15 +82,46 @@ const AdminNavigator = createStackNavigator({
     defaultNavigationOptions: defaultNavOptions
 });
 
-const ShopNavigator = createDrawerNavigator({
-    Products: ProductsNavigator,
-    Orders: OrdersNavigator,
-    Admin: AdminNavigator,
-},
-{
-    contentOptions: {
-        activeTintColor: Colors.primary
+const ShopNavigator = createDrawerNavigator(
+    {
+        Products: ProductsNavigator,
+        Orders: OrdersNavigator,
+        Admin: AdminNavigator,
+    },
+    {
+        contentOptions: {
+            activeTintColor: Colors.primary
+        },
+        contentComponent: props => {
+            const dispatch = useDispatch();
+            return (
+                <View style={{flex: 1, paddingTop: 20 }}>
+                    <SafeAreaView forceInset={{top: 'always', horizontal: 'never'}}>
+                        <DrawerNavigatorItems {...props} />
+                        <Button title='Logout' color={Colors.primary} onPress={() => {
+                            dispatch(authActions.logout());
+                            //props.navigation.navigate('Auth'); //dont need after NavContainer added bc if trigger logout action above the token is auto cleared from redux which triggers NavContainer.
+                        }} />
+                    </SafeAreaView>
+                </View>
+            ) //DrawerNavigatorItems contains your default drawer items so spread in their props. then add your custom stuff.
+        }
     }
-})
+);
 
-export default createAppContainer(ShopNavigator)
+const AuthNavigator = createStackNavigator(
+    {
+        Auth: AuthScreen,
+    }, 
+    {
+        defaultNavigationOptions: defaultNavOptions
+    }
+);
+
+const MainNavigator = createSwitchNavigator({
+    Startup: StartupScreen,
+    Auth: AuthNavigator,
+    Shop: ShopNavigator,
+});
+
+export default createAppContainer(MainNavigator);

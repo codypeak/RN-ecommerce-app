@@ -188,7 +188,7 @@ EditProductScreen.navigationOptions = navData => {
     const submitFn = navData.navigation.getParam('submit'); //once setParam in useEffect, can get it here. 
     return {
         headerTitle: navData.navigation.getParam('productId') 
-        ? 'Edit Product' //from UserProductScreen if parameter has id then show Edit, if not show Add.
+        ? 'Edit Product' //from UserProductsScreen if parameter has id then show Edit, if not show Add.
         : 'Add Product',
         headerRight: (
             <HeaderButtons HeaderButtonComponent={HeaderButton}>
